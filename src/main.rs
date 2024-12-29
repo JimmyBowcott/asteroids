@@ -14,12 +14,19 @@ fn main() -> Result<(), String> {
         .build()
         .unwrap();
 
-    let screen_area = Rect::new(0, 0, screen_width, screen_height);
     let black = Color::RGB(0,0,0);
+    let white = Color::RGB(255, 255, 255);
     canvas.set_draw_color(black);
 
     let mut running = true;
     let mut event_queue = sdl_context.event_pump().unwrap();
+
+    let character_width = 20;
+    let character_height = 20;
+    let character_x = (screen_width / 2 - character_width / 2) as i32;
+    let character_y = (screen_height / 2 - character_height / 2) as i32;
+
+    let character_rect = Rect::new(character_x, character_y, character_width, character_height);
 
     while running {
 
@@ -34,7 +41,13 @@ fn main() -> Result<(), String> {
                 _ => {}
             }
         }
-        canvas.fill_rect(screen_area);
+
+        canvas.set_draw_color(black);
+        canvas.clear();
+
+        canvas.set_draw_color(white);
+        canvas.fill_rect(character_rect)?;
+
         canvas.present();
     }
 
