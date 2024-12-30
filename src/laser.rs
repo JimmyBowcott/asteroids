@@ -1,4 +1,4 @@
-use sdl2::{pixels::Color, render::Canvas, video::Window};
+use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
 
 #[derive(Debug)]
 pub struct Laser {
@@ -19,16 +19,17 @@ impl Laser {
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, color: Color) -> Result<(), String> {
-        let laser_length = 15.0;
+        let dot_size = 3;
 
-        let end_x = self.x + laser_length * self.angle.cos();
-        let end_y = self.y + laser_length * self.angle.sin();
-
+        let rect = Rect::new(
+            (self.x - dot_size as f64 / 2.0) as i32,
+            (self.y - dot_size as f64 / 2.0) as i32,
+            dot_size as u32,
+            dot_size as u32,
+        );
+        
         canvas.set_draw_color(color);
-        canvas.draw_line(
-            (self.x as i32, self.y as i32),
-            (end_x as i32, end_y as i32),
-        )?;
+        canvas.fill_rect(rect)?;
 
         Ok(())
     }

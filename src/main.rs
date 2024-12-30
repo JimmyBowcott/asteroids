@@ -1,5 +1,6 @@
 mod player;
 mod laser;
+mod asteroid;
 mod game_state;
 
 use sdl2::event::Event;
@@ -35,6 +36,10 @@ fn main() -> Result<(), String> {
 
         let keyboard_state = event_queue.keyboard_state();
 
+        game_state.add_asteroids();
+        for asteroid in game_state.asteroids.iter_mut() {
+            asteroid.update(screen_width, screen_height)
+        }
         game_state.player.update(&keyboard_state);
         game_state.update_lasers(&keyboard_state);
         game_state.draw(&mut canvas)?;

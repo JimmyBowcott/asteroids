@@ -3,22 +3,31 @@ use std::time::{Instant, Duration};
 
 use crate::player::Player;
 use crate::laser::Laser;
+use crate::asteroid::Asteroid;
 
 pub struct GameState {
     pub running: bool,
     pub player: Player,
-    pub lasers: Vec<Laser>,
-    pub max_lasers: usize,
-    pub last_fired_time: Instant,
-    pub firing_interval: Duration,
+    pub asteroids: Vec<Asteroid>,
+    screen_width: u32,
+    screen_height: u32,
+    lasers: Vec<Laser>,
+    n_asteroids: usize,
+    max_lasers: usize,
+    last_fired_time: Instant,
+    firing_interval: Duration,
 }
 
 impl GameState {
     pub fn new(screen_width: u32, screen_height: u32) -> Self {
         GameState {
+            screen_width,
+            screen_height,
             running: true,
+            asteroids: Vec::new(),
             player: Player::new(screen_width as f64 / 2.0, screen_height as f64 / 2.0),
             lasers: Vec::new(),
+            n_asteroids: 5,
             max_lasers: 64,
             last_fired_time: Instant::now(),
             firing_interval: Duration::from_millis(350),
@@ -42,6 +51,13 @@ impl GameState {
         }
     }
 
+    pub fn add_asteroids(&mut self) {
+        while self.asteroids.len() < self.n_asteroids {
+            let asteroid = Asteroid::new(self.screen_width, self.screen_height);
+            self.asteroids.push(asteroid)
+        }
+    }
+
     pub fn draw(&self, canvas: &mut Canvas<Window>) -> Result<(), String> {
         let black = Color::RGB(0,0,0);
         let white = Color::RGB(255, 255, 255);
@@ -51,6 +67,10 @@ impl GameState {
 
         self.player.draw(canvas, white)?;
         
+        for asteroid in &self.asteroids {
+            asteroid.draw(canvas, white)?;
+        }
+
         for laser in &self.lasers {
             laser.draw(canvas, white)?;
         }
