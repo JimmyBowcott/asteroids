@@ -1,5 +1,39 @@
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
-use std::f64::consts::PI;
+use std::{f64::consts::PI, time::Instant};
+
+#[derive(Debug)]
+struct Laser {
+    x: f64,
+    y: f64,
+    angle: f64,
+    speed: f64,
+}
+
+impl Laser {
+    fn new(x: f64, y: f64, angle: f64, speed: f64) -> Self {
+        Laser { x, y, angle, speed }
+    }
+
+    fn update(&mut self) {
+        self.x += self.speed * self.angle.cos();
+        self.y += self.speed * self.angle.sin();
+    }
+
+    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) -> Result<(), String> {
+        let laser_length = 20.0;
+
+        let end_x = self.x + laser_length * self.angle.cos();
+        let end_y = self.y + laser_length * self.angle.sin();
+
+        canvas.set_draw_color(color);
+        canvas.draw_line(
+            (self.x as i32, self.y as i32),
+            (end_x as i32, end_y as i32),
+        )?;
+
+        Ok(())
+    }
+}
 
 fn draw_triangle(
     canvas: &mut Canvas<Window>,
@@ -85,6 +119,13 @@ fn main() -> Result<(), String> {
     let acceleration: f64 = 0.0001;
     let decceleration: f64 = 0.000005;
 
+    let mut lasers: Vec<Laser> = Vec::new();
+    let laser_speed: f64 = 0.075;
+    let max_lasers: usize = 10;
+    let firing_interval = std::time::Duration::from_millis(350);
+    let mut last_fired_time = Instant::now();
+    let mut firing = false;
+
     while running {
 
         for event in event_queue.poll_iter() {
@@ -109,11 +150,24 @@ fn main() -> Result<(), String> {
         keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::D) {
             angle += rotation_speed;
         }
-        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Space) ||
-        keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Up) ||
+        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Up) ||
         keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::W) {
             velocity_x += acceleration * angle.cos();
             velocity_y += acceleration * angle.sin();    
+        } else {
+            velocity_x -= decceleration * velocity_x.signum();
+            velocity_y -= decceleration * velocity_y.signum();
+        }
+        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Space) {
+            firing = true;
+            if last_fired_time.elapsed() >= firing_interval {
+                if lasers.len() < max_lasers {
+                    lasers.push(Laser::new(pos_x, pos_y, angle, laser_speed));
+                    last_fired_time = Instant::now();
+                }
+            }
+        } else {
+            firing = false;
         }
 
         let current_velocity: f64 = (velocity_x.powi(2) + velocity_y.powi(2)).sqrt();
@@ -122,9 +176,6 @@ fn main() -> Result<(), String> {
             velocity_x *= scale;
             velocity_y *= scale;
         }
-
-        velocity_x -= decceleration * velocity_x.signum();
-        velocity_y -= decceleration * velocity_y.signum();
 
         pos_x += velocity_x - decceleration;
         pos_y += velocity_y - decceleration;
@@ -141,11 +192,20 @@ fn main() -> Result<(), String> {
             pos_y = 0.0;
         }
 
+        for laser in lasers.iter_mut() {
+            laser.update();
+        }
+
+        lasers.retain(|laser| laser.x >= 0.0 && laser.x <= screen_width as f64 && laser.y >= 0.0 && laser.y <= screen_height as f64);
         canvas.set_draw_color(black);
         canvas.clear();
 
         canvas.set_draw_color(white);
         draw_triangle(&mut canvas, pos_x, pos_y, 30.0, angle)?;
+
+        for laser in lasers.iter() {
+            laser.draw(&mut canvas, white)?;
+        }
 
         canvas.present();
     }
