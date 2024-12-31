@@ -2,6 +2,7 @@ mod player;
 mod laser;
 mod asteroid;
 mod game_state;
+mod utils;
 
 use sdl2::event::Event;
 use game_state::GameState;
@@ -41,7 +42,8 @@ fn main() -> Result<(), String> {
             asteroid.update(screen_width, screen_height)
         }
         game_state.player.update(&keyboard_state);
-        game_state.update_lasers(&keyboard_state);
+        game_state.handle_firing(&keyboard_state);
+        game_state.handle_asteroid_hits();
         game_state.draw(&mut canvas)?;
         canvas.present();
         

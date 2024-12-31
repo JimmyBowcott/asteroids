@@ -34,7 +34,28 @@ impl GameState {
         }
     }
 
-    pub fn update_lasers(&mut self, keyboard_state: &KeyboardState) {
+    pub fn draw(&self, canvas: &mut Canvas<Window>) -> Result<(), String> {
+        let black = Color::RGB(0,0,0);
+        let white = Color::RGB(255, 255, 255);
+
+        canvas.set_draw_color(black);
+        canvas.clear();
+
+        self.player.draw(canvas, white)?;
+        
+        for asteroid in &self.asteroids {
+            asteroid.draw(canvas, white)?;
+        }
+
+        for laser in &self.lasers {
+            laser.draw(canvas, white)?;
+        }
+
+        canvas.present();
+        Ok(())
+    }
+
+    pub fn handle_firing(&mut self, keyboard_state: &KeyboardState) {
         self.lasers.retain(|laser| laser.x >= 0.0 && laser.x <= 800.0 && laser.y >= 0.0 && laser.y <= 600.0);
 
         if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Space) {
@@ -58,24 +79,24 @@ impl GameState {
         }
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>) -> Result<(), String> {
-        let black = Color::RGB(0,0,0);
-        let white = Color::RGB(255, 255, 255);
-
-        canvas.set_draw_color(black);
-        canvas.clear();
-
-        self.player.draw(canvas, white)?;
-        
-        for asteroid in &self.asteroids {
-            asteroid.draw(canvas, white)?;
-        }
-
+    pub fn handle_asteroid_hits(&mut self) {
+        let mut asteroids_to_destroy = Vec::new();
         for laser in &self.lasers {
-            laser.draw(canvas, white)?;
+            for (index, asteroid) in self.asteroids.iter().enumerate() {
+                if asteroid.is_hit(laser.x, laser.y) {
+                    asteroids_to_destroy.push(index);
+                }
+            }
         }
 
-        canvas.present();
-        Ok(())
+        for index in asteroids_to_destroy.into_iter().rev() {
+            self.destroy_asteroid(index);
+        }
+
     }
+
+    fn destroy_asteroid(&mut self, index: usize) {
+        self.asteroids.remove(index);
+    }
+
 }
