@@ -48,7 +48,10 @@ pub fn generate_spawn_points(screen_width: u32, screen_height: u32, margin: f64)
             y = -margin;
             x = rng.gen_range(0.0..screen_width as f64);
         }
-        _ => panic!("Unexpected side generated")
+        _ => {
+            x = 0.0;
+            y = 0.0;
+        }
     }
 
     (x, y)
@@ -60,4 +63,13 @@ pub fn interpolate(y: i32, y1: i32, y2: i32, x1: i32, x2: i32) -> i32 {
     } else {
         x1 + (x2 - x1) * (y - y1) / (y2 - y1)
     }
+}
+
+pub fn generate_velocity(min: f64, max: f64) -> (f64, f64) {
+    let mut rng = rand::thread_rng();
+    let x_multiplier = if rng.gen::<bool>() { 1 } else { -1 };
+    let velocity_x = rng.gen_range(min..max) * x_multiplier as f64;
+    let y_multiplier = if rng.gen::<bool>() { 1 } else { -1 };
+    let velocity_y = rng.gen_range(min..max) * y_multiplier as f64;
+    (velocity_x, velocity_y)
 }

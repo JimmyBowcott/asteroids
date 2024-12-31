@@ -17,8 +17,7 @@ impl Asteroid {
         let mut rng = rand::thread_rng();
         let scale = rng.gen_range(20.0..50.0);
         let (x,y) = utils::generate_spawn_points(screen_width, screen_height, scale);
-        let velocity_x = rng.gen_range(-0.02..0.02);
-        let velocity_y = rng.gen_range(-0.02..0.02);
+        let (velocity_x, velocity_y) = utils::generate_velocity(0.01, 0.02);
 
         Self {
             x,
@@ -67,9 +66,28 @@ impl Asteroid {
     }
 
     fn ensure_asteroid_is_on_screen(&mut self, screen_width: u32, screen_height: u32) {
-        if self.x < -self.scale { self.x = screen_width as f64 + self.scale }
-        else if self.x > screen_width as f64 + self.scale { self.x = -self.scale }
-        if self.y < -self.scale { self.y = screen_height as f64 + self.scale }
-        else if self.y > screen_height as f64 + self.scale { self.y = -self.scale }
+        if self.is_off_screen_x(screen_width) {
+            if self.velocity_x > 0.0 {
+                self.x = -self.scale;
+            } else {
+                self.x = self.scale + screen_width as f64;
+            }
+        }
+        if self.is_off_screen_y(screen_height) {
+            if self.velocity_y > 0.0 {
+                self.y = -self.scale;
+            } else {
+                self.y = self.scale + screen_height as f64;
+            }
+        }
     }
+
+    fn is_off_screen_x(&self, screen_width: u32) -> bool {
+        self.x <= -self.scale || self.x >= self.scale + screen_width as f64
+    }
+
+    fn is_off_screen_y(&self, screen_height: u32) -> bool {
+        self.y <= -self.scale || self.y >= self.scale + screen_height as f64
+    }
+
 }
