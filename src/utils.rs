@@ -41,7 +41,7 @@ pub fn generate_spawn_points(screen_width: u32, screen_height: u32, margin: f64)
             y = rng.gen_range(0.0..screen_height as f64);
         }
         'T' => {
-            y = margin + screen_height as f64;;
+            y = margin + screen_height as f64;
             x = rng.gen_range(0.0..screen_width as f64);
         }
         'B' => {
@@ -52,4 +52,12 @@ pub fn generate_spawn_points(screen_width: u32, screen_height: u32, margin: f64)
     }
 
     (x, y)
+}
+
+pub fn interpolate(y: i32, y1: i32, y2: i32, x1: i32, x2: i32) -> i32 {
+    if y1 == y2 {
+        x1
+    } else {
+        x1 + (x2 - x1) * (y - y1) / (y2 - y1)
+    }
 }

@@ -41,7 +41,7 @@ fn main() -> Result<(), String> {
         for asteroid in game_state.asteroids.iter_mut() {
             asteroid.update(screen_width, screen_height)
         }
-        game_state.player.update(&keyboard_state);
+        game_state.player.update(&keyboard_state, screen_width, screen_height);
         game_state.handle_firing(&keyboard_state);
         game_state.handle_asteroid_hits();
         game_state.draw(&mut canvas)?;

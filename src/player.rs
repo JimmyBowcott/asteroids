@@ -1,6 +1,8 @@
 use sdl2::{keyboard::KeyboardState, pixels::Color, render::Canvas, video::Window };
 use std::f64::consts::PI;
 
+use crate::utils;
+
 pub struct Player {
     pub x: f64,
     pub y: f64,
@@ -28,7 +30,7 @@ impl Player {
         }
     }
 
-    pub fn update(&mut self, keyboard_state: &KeyboardState) {
+    pub fn update(&mut self, keyboard_state: &KeyboardState, screen_width: u32, screen_height: u32) {
         if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Left) ||
         keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::A) {
             self.angle -= self.rotation_speed;
@@ -53,10 +55,8 @@ impl Player {
             self.velocity_y *= scale;
         }
 
-        self.x += self.velocity_x - self.deceleration;
-        self.y += self.velocity_y - self.deceleration;
-
-
+        self.move_player();
+        self.ensure_player_is_on_screen(screen_width, screen_height);
 
     }
 
@@ -88,12 +88,12 @@ impl Player {
     
         for y in y1..=y3 {
             let x_start = if y < y2 {
-                interpolate(y, y1, y2, x1, x2)
+                utils::interpolate(y, y1, y2, x1, x2)
             } else {
-                interpolate(y, y2, y3, x2, x3)
+                utils::interpolate(y, y2, y3, x2, x3)
             };
     
-            let x_end = interpolate(y, y1, y3, x1, x3);
+            let x_end = utils::interpolate(y, y1, y3, x1, x3);
     
             for x in x_start.min(x_end)..=x_start.max(x_end) {
                 canvas.draw_point((x, y)).unwrap();
@@ -103,12 +103,17 @@ impl Player {
         Ok(())
 
     }
-}
 
-fn interpolate(y: i32, y1: i32, y2: i32, x1: i32, x2: i32) -> i32 {
-    if y1 == y2 {
-        x1
-    } else {
-        x1 + (x2 - x1) * (y - y1) / (y2 - y1)
+    fn move_player(&mut self) {
+        self.x += self.velocity_x - self.deceleration;
+        self.y += self.velocity_y - self.deceleration;
     }
+
+    fn ensure_player_is_on_screen(&mut self, screen_width: u32, screen_height: u32) {
+        if self.x < 0.0 { self.x = screen_width as f64 }
+        else if self.x > screen_width as f64 { self.x = 0.0 }
+        if self.y < 0.0 { self.y = screen_height as f64 }
+        else if self.y > screen_height as f64 { self.y = 0.0 }
+    }
+
 }
