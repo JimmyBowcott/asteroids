@@ -27,7 +27,7 @@ impl GameState {
             asteroids: Vec::new(),
             player: Player::new(screen_width as f64 / 2.0, screen_height as f64 / 2.0),
             lasers: Vec::new(),
-            n_asteroids: 5,
+            n_asteroids: 7,
             max_lasers: 64,
             last_fired_time: Instant::now(),
             firing_interval: Duration::from_millis(350),

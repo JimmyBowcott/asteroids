@@ -24,8 +24,8 @@ impl Player {
             velocity_x: 0.0,
             velocity_y: 0.0,
             rotation_speed: 0.001,
-            acceleration: 0.0001,
-            max_velocity: 0.05,
+            acceleration: 0.000025,
+            max_velocity: 0.065,
             deceleration: 0.000005,
         }
     }
