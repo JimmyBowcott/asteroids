@@ -34,7 +34,7 @@ impl GameState {
         }
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>) -> Result<(), String> {
+    pub fn draw(&self, canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
         let black = Color::RGB(0,0,0);
         let white = Color::RGB(255, 255, 255);
 
@@ -42,6 +42,7 @@ impl GameState {
         canvas.clear();
 
         self.player.draw(canvas, white)?;
+        self.player.draw_score(canvas, white, font)?;
         
         for asteroid in &self.asteroids {
             asteroid.draw(canvas, white)?;
@@ -85,6 +86,7 @@ impl GameState {
             for (index, asteroid) in self.asteroids.iter().enumerate() {
                 if asteroid.is_hit(laser.x, laser.y) {
                     asteroids_to_destroy.push(index);
+                    self.player.increment_score();
                 }
             }
         }

@@ -1,4 +1,4 @@
-use sdl2::{keyboard::KeyboardState, pixels::Color, render::Canvas, video::Window };
+use sdl2::{keyboard::KeyboardState, pixels::Color, rect::Rect, render::Canvas, video::Window };
 use std::f64::consts::PI;
 
 use crate::utils;
@@ -13,6 +13,7 @@ pub struct Player {
     acceleration: f64,
     max_velocity: f64,
     deceleration: f64,
+    score: u32,
 }
 
 impl Player {
@@ -27,6 +28,7 @@ impl Player {
             acceleration: 0.000025,
             max_velocity: 0.065,
             deceleration: 0.000005,
+            score: 0,
         }
     }
 
@@ -102,6 +104,31 @@ impl Player {
     
         Ok(())
 
+    }
+
+    pub fn increment_score(&mut self) {
+        self.score += 1;
+    }
+
+    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: Color,font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+        let text = format!("SCORE: {}", self.score);
+        let surface = font
+            .render(&text)
+            .blended(color)
+            .map_err(|e| e.to_string())?;
+
+        let texture_creator = canvas.texture_creator();
+        let texture = texture_creator
+            .create_texture_from_surface(&surface)
+            .map_err(|e| e.to_string())?;
+
+        let text_width = surface.width();
+        let text_height = surface.height();
+        let text_rect = Rect::new(50, 50, text_width, text_height);
+        
+        canvas.copy(&texture, None, Some(text_rect))?;
+
+        Ok(())
     }
 
     fn move_player(&mut self) {

@@ -8,6 +8,10 @@ use sdl2::event::Event;
 use game_state::GameState;
 
 fn main() -> Result<(), String> {   
+    let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
+    let font_path = "./src/assets/font/HomeVideoBold-R90Dv.ttf";
+    let font: sdl2::ttf::Font<'_, '_> = ttf_context.load_font(font_path, 32)?;
+
     let screen_width = 800;
     let screen_height = 600;
 
@@ -23,6 +27,7 @@ fn main() -> Result<(), String> {
 
     let mut event_queue = sdl_context.event_pump().unwrap();
     let mut game_state = GameState::new(screen_width, screen_height);
+
 
     while game_state.running {
 
@@ -44,7 +49,7 @@ fn main() -> Result<(), String> {
         game_state.player.update(&keyboard_state, screen_width, screen_height);
         game_state.handle_firing(&keyboard_state);
         game_state.handle_asteroid_hits();
-        game_state.draw(&mut canvas)?;
+        game_state.draw(&mut canvas, &font)?;
         canvas.present();
         
     }
