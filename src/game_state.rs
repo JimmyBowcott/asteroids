@@ -4,9 +4,18 @@ use std::time::{Instant, Duration};
 use crate::player::Player;
 use crate::laser::Laser;
 use crate::asteroid::Asteroid;
+use crate::utils;
+
+#[derive(PartialEq)]
+pub enum State {
+    Playing,
+    Paused,
+    GameOver,
+}
 
 pub struct GameState {
     pub running: bool,
+    pub state: State,
     pub player: Player,
     pub asteroids: Vec<Asteroid>,
     screen_width: u32,
@@ -24,6 +33,7 @@ impl GameState {
             screen_width,
             screen_height,
             running: true,
+            state: State::Playing,
             asteroids: Vec::new(),
             player: Player::new(screen_width as f64 / 2.0, screen_height as f64 / 2.0),
             lasers: Vec::new(),
@@ -32,6 +42,17 @@ impl GameState {
             last_fired_time: Instant::now(),
             firing_interval: Duration::from_millis(350),
         }
+    }
+
+    pub fn update(&mut self, keyboard_state: &KeyboardState) {
+        self.add_asteroids();
+        for asteroid in self.asteroids.iter_mut() {
+            asteroid.update(self.screen_width, self.screen_height)
+        }
+        self.player.update(&keyboard_state, self.screen_width, self.screen_height);
+        self.handle_firing(&keyboard_state);
+        self.handle_asteroid_hits();
+        self.handle_player_collision();
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
@@ -50,6 +71,10 @@ impl GameState {
 
         for laser in &self.lasers {
             laser.draw(canvas, white)?;
+        }
+
+        if self.state == State::Paused {
+            self.draw_paused_screen(canvas, white, font)?;
         }
 
         canvas.present();
@@ -94,7 +119,33 @@ impl GameState {
         for index in asteroids_to_destroy.into_iter().rev() {
             self.destroy_asteroid(index);
         }
+    }
 
+    pub fn handle_player_collision(&mut self) {
+        for asteroid in self.asteroids.iter() {
+            if asteroid.is_colliding(&self.player.vertices) {
+                // TBA: end the game
+                if !self.player.is_dead() {
+                    self.player.lives -= 1;
+                }
+            }
+        }   
+    }
+
+    pub fn toggle_paused(&mut self) {
+        if self.state == State::Playing {
+            self.state = State::Paused
+        } else if self.state == State::Paused {
+            self.state = State::Playing
+        }
+    }
+
+    pub fn draw_paused_screen(&self,  canvas: &mut Canvas<Window>, color: Color, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+        let text = "PAUSED";
+        let x_offset = -50;
+        let y_offset = -20;
+        let position: (i32, i32) = ((0.5*self.screen_width as f32) as i32 + x_offset, (0.5*self.screen_height as f32) as i32 + y_offset);
+        utils::draw_text(canvas, &text, color, font, position)
     }
 
     fn destroy_asteroid(&mut self, index: usize) {

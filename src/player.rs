@@ -1,4 +1,4 @@
-use sdl2::{keyboard::KeyboardState, pixels::Color, rect::Rect, render::Canvas, video::Window };
+use sdl2::{keyboard::KeyboardState, pixels::Color, rect::Point, render::Canvas, video::Window };
 use std::f64::consts::PI;
 
 use crate::utils;
@@ -7,6 +7,8 @@ pub struct Player {
     pub x: f64,
     pub y: f64,
     pub angle: f64,
+    pub lives: u8,
+    pub vertices: Vec<Point>,
     velocity_x: f64,
     velocity_y: f64,
     rotation_speed: f64,
@@ -21,6 +23,7 @@ impl Player {
         Self {
             x,
             y,
+            vertices: Vec::new(),
             angle: -PI/2.0,
             velocity_x: 0.0,
             velocity_y: 0.0,
@@ -29,6 +32,7 @@ impl Player {
             max_velocity: 0.065,
             deceleration: 0.000005,
             score: 0,
+            lives: 3,
         }
     }
 
@@ -58,33 +62,18 @@ impl Player {
         }
 
         self.move_player();
+        self.get_vertices();
         self.ensure_player_is_on_screen(screen_width, screen_height);
 
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, color: Color) -> Result<(), String> {
-        let scale = 20.0;
-    
-        let tip_x = self.x + scale * (self.angle).cos();
-        let tip_y = self.y + scale * (self.angle).sin();
-    
-        let left_x = self.x + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).cos());
-        let left_y = self.y + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).sin());
-    
-        let right_x = self.x + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).cos());
-        let right_y = self.y + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).sin());
-    
-        let mut vertices = [
-            (tip_x as i32, tip_y as i32),
-            (left_x as i32, left_y as i32),
-            (right_x as i32, right_y as i32),
-        ];
+        let mut sorted_vertices = self.vertices.clone();
+        sorted_vertices.sort_by_key(|point| point.y);
         
-        vertices.sort_by_key(|&(_, y)| y);
-    
-        let (x1, y1) = vertices[0];
-        let (x2, y2) = vertices[1];
-        let (x3, y3) = vertices[2];
+        let (x1, y1) = (sorted_vertices[0].x, sorted_vertices[0].y);
+        let (x2, y2) = (sorted_vertices[1].x, sorted_vertices[1].y);
+        let (x3, y3) = (sorted_vertices[2].x, sorted_vertices[2].y);
     
         canvas.set_draw_color(color);
     
@@ -103,37 +92,43 @@ impl Player {
         }
     
         Ok(())
-
     }
 
     pub fn increment_score(&mut self) {
         self.score += 1;
     }
 
-    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: Color,font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: Color, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
         let text = format!("SCORE: {}", self.score);
-        let surface = font
-            .render(&text)
-            .blended(color)
-            .map_err(|e| e.to_string())?;
+        let position: (i32, i32) = (25, 25);
+        utils::draw_text(canvas, &text, color, font, position)
+    }
 
-        let texture_creator = canvas.texture_creator();
-        let texture = texture_creator
-            .create_texture_from_surface(&surface)
-            .map_err(|e| e.to_string())?;
-
-        let text_width = surface.width();
-        let text_height = surface.height();
-        let text_rect = Rect::new(50, 50, text_width, text_height);
-        
-        canvas.copy(&texture, None, Some(text_rect))?;
-
-        Ok(())
+    pub fn is_dead(&self) -> bool {
+        self.lives == 0
     }
 
     fn move_player(&mut self) {
         self.x += self.velocity_x - self.deceleration;
         self.y += self.velocity_y - self.deceleration;
+    }
+
+    fn get_vertices(&mut self) {
+        self.vertices.clear();
+        let scale = 20.0;
+    
+        let tip_x = self.x + scale * (self.angle).cos();
+        let tip_y = self.y + scale * (self.angle).sin();
+    
+        let left_x = self.x + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).cos());
+        let left_y = self.y + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).sin());
+    
+        let right_x = self.x + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).cos());
+        let right_y = self.y + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).sin());
+    
+        self.vertices.push(Point::new(tip_x as i32, tip_y as i32));
+        self.vertices.push(Point::new(left_x as i32, left_y as i32));
+        self.vertices.push(Point::new(right_x as i32, right_y as i32));
     }
 
     fn ensure_player_is_on_screen(&mut self, screen_width: u32, screen_height: u32) {

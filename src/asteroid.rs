@@ -1,7 +1,7 @@
 use sdl2::{pixels::Color, rect::Point, render::Canvas, video::Window};
 use rand::Rng;
 use std::f64::consts::PI;
-use crate::utils;
+use crate::utils::{self, triangle_polygon_collision};
 
 pub struct Asteroid {
     x: f64,
@@ -44,6 +44,10 @@ impl Asteroid {
     pub fn is_hit(&self, laser_x: f64, laser_y: f64) -> bool {
         let laser_point = Point::new(laser_x as i32, laser_y as i32);
         utils::is_point_in_polygon(laser_point, &self.vertices)
+    }
+
+    pub fn is_colliding(&self, triangle: &Vec<Point>) -> bool {
+        triangle_polygon_collision(&triangle, &self.vertices)
     }
 
     fn move_asteroid(&mut self) {

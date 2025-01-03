@@ -4,8 +4,8 @@ mod asteroid;
 mod game_state;
 mod utils;
 
-use sdl2::event::Event;
-use game_state::GameState;
+use sdl2::{event::Event, keyboard::Keycode};
+use game_state::{GameState, State};
 
 fn main() -> Result<(), String> {   
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
@@ -36,20 +36,28 @@ fn main() -> Result<(), String> {
                 Event::Quit {..} => {
                     game_state.running = false;
                 }
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    game_state.toggle_paused()
+                }
                 _ => {}
             }
         }
 
         let keyboard_state = event_queue.keyboard_state();
 
-        game_state.add_asteroids();
-        for asteroid in game_state.asteroids.iter_mut() {
-            asteroid.update(screen_width, screen_height)
+        match game_state.state {
+            State::Playing => {
+                game_state.update(&keyboard_state);
+                game_state.draw(&mut canvas, &font)?;
+            }
+            State::Paused => {
+                game_state.draw(&mut canvas, &font)?;
+            }
+            State::GameOver => {
+                
+            }
         }
-        game_state.player.update(&keyboard_state, screen_width, screen_height);
-        game_state.handle_firing(&keyboard_state);
-        game_state.handle_asteroid_hits();
-        game_state.draw(&mut canvas, &font)?;
+
         canvas.present();
         
     }
