@@ -124,9 +124,9 @@ impl GameState {
     pub fn handle_player_collision(&mut self) {
         for asteroid in self.asteroids.iter() {
             if asteroid.is_colliding(&self.player.vertices) {
-                // TBA: end the game
-                if !self.player.is_dead() {
-                    self.player.lives -= 1;
+                self.player.lives -= 1;
+                if self.player.is_dead() {
+                    self.state = State::GameOver
                 }
             }
         }   

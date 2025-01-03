@@ -45,6 +45,8 @@ fn main() -> Result<(), String> {
 
         let keyboard_state = event_queue.keyboard_state();
 
+        canvas.clear();
+
         match game_state.state {
             State::Playing => {
                 game_state.update(&keyboard_state);
@@ -54,7 +56,7 @@ fn main() -> Result<(), String> {
                 game_state.draw(&mut canvas, &font)?;
             }
             State::GameOver => {
-                
+                utils::draw_game_over_text(&mut canvas, &font)?;
             }
         }
 

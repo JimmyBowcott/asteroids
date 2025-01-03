@@ -149,3 +149,10 @@ pub fn draw_text(
     canvas.copy(&texture, None, Some(text_rect))?;
     Ok(())
 }
+
+pub fn draw_game_over_text(canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    let text = "GAME OVER";
+    let position = (50, 50);
+    let color = Color::RGB(255, 255, 255);
+    draw_text(canvas, text, color, font, position)
+}
