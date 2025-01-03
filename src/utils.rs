@@ -1,5 +1,6 @@
 use rand::Rng;
 use sdl2::{pixels::Color, rect::{Point, Rect}, render::Canvas, video::Window};
+use std::f64::consts::PI;
 
 pub fn is_point_in_polygon(point: Point, vertices: &[Point]) -> bool {
     let mut is_inside = false;
@@ -150,9 +151,65 @@ pub fn draw_text(
     Ok(())
 }
 
-pub fn draw_game_over_text(canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
-    let text = "GAME OVER";
-    let position = (50, 50);
+pub fn draw_game_over_screen(canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>, screen_width: u32, screen_height: u32, score: u32) -> Result<(), String> {
     let color = Color::RGB(255, 255, 255);
-    draw_text(canvas, text, color, font, position)
+
+    let mut text = "GAME OVER";
+    let mut position = ((screen_width/2 - 110) as i32, (screen_height/2 - 100) as i32);
+    draw_text(canvas, text, color, font, position)?;
+
+    let score_text = format!("SCORE: {}", score);
+    position = ((screen_width/2 - 100) as i32, (screen_height/2 - 50) as i32);
+    draw_text(canvas, &score_text, color, font, position)?;
+
+    text = "Press Enter to play again";
+    position = ((screen_width/2 - 250) as i32, (screen_height/2) as i32);
+    draw_text(canvas, text, color, font, position)?;
+
+    Ok(())
+}
+
+pub fn get_vertices(point: (f64, f64), angle: f64, scale: f64) -> Vec<Point>{
+    let mut vertices = Vec::new();
+    let (x, y) = point;
+
+    let tip_x = x + scale * (angle).cos();
+    let tip_y = y + scale * (angle).sin();
+
+    let left_x = x + 0.5 * scale * ((angle + 2.0 * PI / 3.0).cos());
+    let left_y = y + 0.5 * scale * ((angle + 2.0 * PI / 3.0).sin());
+
+    let right_x = x + 0.5 * scale * ((angle - 2.0 * PI / 3.0).cos());
+    let right_y = y + 0.5 * scale * ((angle - 2.0 * PI / 3.0).sin());
+
+    vertices.push(Point::new(tip_x as i32, tip_y as i32));
+    vertices.push(Point::new(left_x as i32, left_y as i32));
+    vertices.push(Point::new(right_x as i32, right_y as i32));
+    vertices
+}
+
+pub fn draw_vertices(canvas: &mut Canvas<Window>, vertices: &Vec<Point>, color: Color) -> Result<(), String> {
+    let mut sorted_vertices = vertices.clone();
+        sorted_vertices.sort_by_key(|point| point.y);
+        
+        let (x1, y1) = (sorted_vertices[0].x, sorted_vertices[0].y);
+        let (x2, y2) = (sorted_vertices[1].x, sorted_vertices[1].y);
+        let (x3, y3) = (sorted_vertices[2].x, sorted_vertices[2].y);
+    
+        canvas.set_draw_color(color);
+    
+        for y in y1..=y3 {
+            let x_start = if y < y2 {
+                interpolate(y, y1, y2, x1, x2)
+            } else {
+                interpolate(y, y2, y3, x2, x3)
+            };
+    
+            let x_end = interpolate(y, y1, y3, x1, x3);
+    
+            for x in x_start.min(x_end)..=x_start.max(x_end) {
+                canvas.draw_point((x, y)).unwrap();
+            }
+        }
+    Ok(())
 }

@@ -56,14 +56,11 @@ impl GameState {
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
-        let black = Color::RGB(0,0,0);
         let white = Color::RGB(255, 255, 255);
-
-        canvas.set_draw_color(black);
-        canvas.clear();
 
         self.player.draw(canvas, white)?;
         self.player.draw_score(canvas, white, font)?;
+        self.player.draw_lives(canvas, self.screen_width, white)?;
         
         for asteroid in &self.asteroids {
             asteroid.draw(canvas, white)?;
@@ -124,12 +121,12 @@ impl GameState {
     pub fn handle_player_collision(&mut self) {
         for asteroid in self.asteroids.iter() {
             if asteroid.is_colliding(&self.player.vertices) {
-                self.player.lives -= 1;
+                self.player.hit(self.screen_width, self.screen_height);
                 if self.player.is_dead() {
                     self.state = State::GameOver
                 }
             }
-        }   
+        }  
     }
 
     pub fn toggle_paused(&mut self) {
@@ -146,6 +143,12 @@ impl GameState {
         let y_offset = -20;
         let position: (i32, i32) = ((0.5*self.screen_width as f32) as i32 + x_offset, (0.5*self.screen_height as f32) as i32 + y_offset);
         utils::draw_text(canvas, &text, color, font, position)
+    }
+
+    pub fn reset(&mut self) {
+        self.asteroids.clear();
+        self.lasers.clear();
+        self.player.reset(self.screen_width, self.screen_height);
     }
 
     fn destroy_asteroid(&mut self, index: usize) {

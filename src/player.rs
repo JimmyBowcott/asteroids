@@ -1,5 +1,5 @@
 use sdl2::{keyboard::KeyboardState, pixels::Color, rect::Point, render::Canvas, video::Window };
-use std::f64::consts::PI;
+use std::{f64::consts::PI, time::{Duration, Instant}};
 
 use crate::utils;
 
@@ -7,15 +7,17 @@ pub struct Player {
     pub x: f64,
     pub y: f64,
     pub angle: f64,
-    pub lives: u8,
     pub vertices: Vec<Point>,
+    pub score: u32,
     velocity_x: f64,
     velocity_y: f64,
     rotation_speed: f64,
     acceleration: f64,
     max_velocity: f64,
     deceleration: f64,
-    score: u32,
+    lives: u8,
+    timer: Instant,
+    invulnrable: bool,
 }
 
 impl Player {
@@ -33,6 +35,8 @@ impl Player {
             deceleration: 0.000005,
             score: 0,
             lives: 3,
+            timer: Instant::now(),
+            invulnrable: false,
         }
     }
 
@@ -61,36 +65,21 @@ impl Player {
             self.velocity_y *= scale;
         }
 
+        if self.timer.elapsed() >= Duration::from_secs(3) {
+            self.invulnrable = false;
+        }
+
         self.move_player();
-        self.get_vertices();
+        self.vertices = utils::get_vertices((self.x, self.y), self.angle, 20.0);
         self.ensure_player_is_on_screen(screen_width, screen_height);
 
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, color: Color) -> Result<(), String> {
-        let mut sorted_vertices = self.vertices.clone();
-        sorted_vertices.sort_by_key(|point| point.y);
-        
-        let (x1, y1) = (sorted_vertices[0].x, sorted_vertices[0].y);
-        let (x2, y2) = (sorted_vertices[1].x, sorted_vertices[1].y);
-        let (x3, y3) = (sorted_vertices[2].x, sorted_vertices[2].y);
-    
-        canvas.set_draw_color(color);
-    
-        for y in y1..=y3 {
-            let x_start = if y < y2 {
-                utils::interpolate(y, y1, y2, x1, x2)
-            } else {
-                utils::interpolate(y, y2, y3, x2, x3)
-            };
-    
-            let x_end = utils::interpolate(y, y1, y3, x1, x3);
-    
-            for x in x_start.min(x_end)..=x_start.max(x_end) {
-                canvas.draw_point((x, y)).unwrap();
+            if self.invulnrable && self.timer.elapsed().as_millis() / 150 % 2 == 0 {
+                return Ok(());
             }
-        }
-    
+            utils::draw_vertices(canvas, &self.vertices, color)?;
         Ok(())
     }
 
@@ -104,31 +93,52 @@ impl Player {
         utils::draw_text(canvas, &text, color, font, position)
     }
 
+    pub fn draw_lives(&self, canvas: &mut Canvas<Window>, screen_width: u32, color: Color) -> Result<(), String> {
+        // Hack to avoid crashes
+        if self.lives == 0 {
+            return Ok(());
+        }
+        let scale = 15.0;
+        let offset = 35.0;
+        let spacing = 30.0;
+        let start_x: f64 = screen_width as f64 - offset - spacing * (self.lives - 1) as f64;
+        for i in 0..self.lives {
+            let x: f64 = start_x + i as f64 * spacing;
+            let vertices = utils::get_vertices((x, offset), -PI/2.0, scale);
+            utils::draw_vertices(canvas, &vertices, color)?;
+        }
+        Ok(())
+    }
+
+    pub fn hit(&mut self, screen_width: u32, screen_height: u32) {
+        if !self.invulnrable {
+            self.x = (screen_width/2) as f64;
+            self.y = (screen_height/2) as f64;
+            self.lives -= 1;
+            self.velocity_x = 0.0;
+            self.velocity_y = 0.0;
+            self.invulnrable = true;
+            self.timer = Instant::now();
+        }
+    }
+
     pub fn is_dead(&self) -> bool {
         self.lives == 0
+    }
+
+    pub fn reset(&mut self, screen_width: u32, screen_height: u32) {
+        self.score = 0;
+        self.lives = 3;
+        self.x = (screen_width/2) as f64;
+        self.y = (screen_height/2) as f64;
+        self.velocity_x = 0.0;
+        self.velocity_y = 0.0;
+        self.invulnrable = false;
     }
 
     fn move_player(&mut self) {
         self.x += self.velocity_x - self.deceleration;
         self.y += self.velocity_y - self.deceleration;
-    }
-
-    fn get_vertices(&mut self) {
-        self.vertices.clear();
-        let scale = 20.0;
-    
-        let tip_x = self.x + scale * (self.angle).cos();
-        let tip_y = self.y + scale * (self.angle).sin();
-    
-        let left_x = self.x + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).cos());
-        let left_y = self.y + 0.5 * scale * ((self.angle + 2.0 * PI / 3.0).sin());
-    
-        let right_x = self.x + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).cos());
-        let right_y = self.y + 0.5 * scale * ((self.angle - 2.0 * PI / 3.0).sin());
-    
-        self.vertices.push(Point::new(tip_x as i32, tip_y as i32));
-        self.vertices.push(Point::new(left_x as i32, left_y as i32));
-        self.vertices.push(Point::new(right_x as i32, right_y as i32));
     }
 
     fn ensure_player_is_on_screen(&mut self, screen_width: u32, screen_height: u32) {

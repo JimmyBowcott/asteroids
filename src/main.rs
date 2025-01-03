@@ -4,7 +4,7 @@ mod asteroid;
 mod game_state;
 mod utils;
 
-use sdl2::{event::Event, keyboard::Keycode};
+use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use game_state::{GameState, State};
 
 fn main() -> Result<(), String> {   
@@ -21,6 +21,7 @@ fn main() -> Result<(), String> {
         .build()
         .unwrap();
 
+    let black = Color::RGB(0,0,0);
     let mut canvas = window.into_canvas()
         .build()
         .unwrap();
@@ -37,7 +38,13 @@ fn main() -> Result<(), String> {
                     game_state.running = false;
                 }
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    game_state.toggle_paused()
+                    game_state.toggle_paused();
+                }
+                Event::KeyDown { keycode: Some(Keycode::Return), .. } => {
+                    if game_state.state == State::GameOver {
+                        game_state.reset();
+                        game_state.state = State::Playing;
+                    }
                 }
                 _ => {}
             }
@@ -45,8 +52,9 @@ fn main() -> Result<(), String> {
 
         let keyboard_state = event_queue.keyboard_state();
 
+        canvas.set_draw_color(black);
         canvas.clear();
-
+        
         match game_state.state {
             State::Playing => {
                 game_state.update(&keyboard_state);
@@ -56,7 +64,8 @@ fn main() -> Result<(), String> {
                 game_state.draw(&mut canvas, &font)?;
             }
             State::GameOver => {
-                utils::draw_game_over_text(&mut canvas, &font)?;
+                utils::draw_game_over_screen(&mut canvas, &font, screen_width, screen_height, game_state.player.score)?;
+                canvas.present();
             }
         }
 
