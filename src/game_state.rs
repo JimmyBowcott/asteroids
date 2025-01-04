@@ -3,7 +3,7 @@ use std::time::{Instant, Duration};
 
 use crate::player::Player;
 use crate::laser::Laser;
-use crate::asteroid::Asteroid;
+use crate::asteroid::{Asteroid, AsteroidConstructor};
 use crate::utils;
 
 #[derive(PartialEq)]
@@ -21,7 +21,8 @@ pub struct GameState {
     screen_width: u32,
     screen_height: u32,
     lasers: Vec<Laser>,
-    n_asteroids: usize,
+    n_parent_asteroids: usize,
+    max_parent_asteroids: usize,
     max_lasers: usize,
     last_fired_time: Instant,
     firing_interval: Duration,
@@ -37,7 +38,8 @@ impl GameState {
             asteroids: Vec::new(),
             player: Player::new(screen_width as f64 / 2.0, screen_height as f64 / 2.0),
             lasers: Vec::new(),
-            n_asteroids: 7,
+            n_parent_asteroids: 0,
+            max_parent_asteroids: 7,
             max_lasers: 64,
             last_fired_time: Instant::now(),
             firing_interval: Duration::from_millis(350),
@@ -96,25 +98,47 @@ impl GameState {
     }
 
     pub fn add_asteroids(&mut self) {
-        while self.asteroids.len() < self.n_asteroids {
-            let asteroid = Asteroid::new(self.screen_width, self.screen_height);
-            self.asteroids.push(asteroid)
+        while self.n_parent_asteroids < self.max_parent_asteroids {
+            let asteroid = AsteroidConstructor::new(self.screen_width, self.screen_height).parent(true).build();
+            self.asteroids.push(asteroid);
+            self.n_parent_asteroids += 1;
         }
     }
 
     pub fn handle_asteroid_hits(&mut self) {
         let mut asteroids_to_destroy = Vec::new();
-        for laser in &self.lasers {
+        let mut asteroids_to_spawn = Vec::new();
+        let mut lasers_to_remove = Vec::new();
+
+        for (laser_index, laser) in self.lasers.iter().enumerate() {
             for (index, asteroid) in self.asteroids.iter().enumerate() {
                 if asteroid.is_hit(laser.x, laser.y) {
                     asteroids_to_destroy.push(index);
+                    lasers_to_remove.push(laser_index);
                     self.player.increment_score();
+                    if asteroid.parent {
+                        self.n_parent_asteroids -= 1;
+                        asteroids_to_spawn.push(index);
+                    }
                 }
+            }
+        }
+        
+        for index in asteroids_to_spawn.into_iter() {
+            if let Some(asteroid) = self.asteroids.get(index) {
+                let child_1 = asteroid.generate_child(self.screen_width, self.screen_height);
+                let child_2 = asteroid.generate_child(self.screen_width, self.screen_height);
+                self.asteroids.push(child_1);
+                self.asteroids.push(child_2);
             }
         }
 
         for index in asteroids_to_destroy.into_iter().rev() {
             self.destroy_asteroid(index);
+        }
+
+        for index in lasers_to_remove.into_iter().rev() {
+            self.remove_laser(index);
         }
     }
 
@@ -153,6 +177,10 @@ impl GameState {
 
     fn destroy_asteroid(&mut self, index: usize) {
         self.asteroids.remove(index);
+    }
+
+    fn remove_laser(&mut self, index: usize) {
+        self.lasers.remove(index);
     }
 
 }

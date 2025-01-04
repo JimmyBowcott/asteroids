@@ -3,6 +3,7 @@ use sdl2::{pixels::Color, rect::{Point, Rect}, render::Canvas, video::Window};
 use std::f64::consts::PI;
 
 pub fn is_point_in_polygon(point: Point, vertices: &[Point]) -> bool {
+    if vertices.len() == 0 { return false }
     let mut is_inside = false;
     let mut j = vertices.len() - 1;
 
@@ -20,7 +21,6 @@ pub fn is_point_in_polygon(point: Point, vertices: &[Point]) -> bool {
 
         j = i;
     }
-
     is_inside
 }
 
