@@ -5,6 +5,8 @@ mod game_state;
 mod utils;
 mod core;
 
+use core::input::SdlController;
+
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use game_state::{GameState, State};
 
@@ -56,7 +58,7 @@ fn main() -> Result<(), String> {
 
         match game_state.state {
             State::Playing => {
-                game_state.update(&event_queue);
+                game_state.update(&SdlController::new(&event_queue));
                 game_state.draw(&mut canvas, &font)?;
             }
             State::Paused => {

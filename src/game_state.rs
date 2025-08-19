@@ -1,7 +1,7 @@
-use sdl2::{keyboard::KeyboardState, pixels::Color, render::Canvas, video::Window};
+use sdl2::{pixels::Color, render::Canvas, video::Window};
 use std::time::{Instant, Duration};
 
-use crate::core::input::InputController;
+use crate::core::input::{Command, InputController};
 use crate::player::Player;
 use crate::laser::Laser;
 use crate::asteroid::{Asteroid, AsteroidConstructor};
@@ -53,7 +53,7 @@ impl GameState {
             asteroid.update(self.screen_width, self.screen_height)
         }
         self.player.update(controller, self.screen_width, self.screen_height);
-        self.handle_firing(&keyboard_state);
+        self.handle_firing(controller);
         self.handle_asteroid_hits();
         self.handle_player_collision();
     }
@@ -81,15 +81,13 @@ impl GameState {
         Ok(())
     }
 
-    pub fn handle_firing(&mut self, keyboard_state: &KeyboardState) {
+    pub fn handle_firing(&mut self, controller: &impl InputController) {
         self.lasers.retain(|laser| laser.x >= 0.0 && laser.x <= 800.0 && laser.y >= 0.0 && laser.y <= 600.0);
 
-        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Space) {
-            if self.last_fired_time.elapsed() >= self.firing_interval {
-                if self.lasers.len() < self.max_lasers {
-                    self.lasers.push(Laser::new(self.player.x, self.player.y, self.player.angle));
-                    self.last_fired_time = Instant::now();
-                }
+        for cmd in controller.poll() {
+            match cmd {
+                Command::Fire => self.fire_laser(),
+                _ => {},
             }
         }
 
@@ -124,7 +122,7 @@ impl GameState {
                 }
             }
         }
-        
+
         for index in asteroids_to_spawn.into_iter() {
             if let Some(asteroid) = self.asteroids.get(index) {
                 let child_1 = asteroid.generate_child(self.screen_width, self.screen_height);
@@ -182,6 +180,15 @@ impl GameState {
 
     fn remove_laser(&mut self, index: usize) {
         self.lasers.remove(index);
+    }
+
+    fn fire_laser(&mut self) {
+        if self.last_fired_time.elapsed() >= self.firing_interval {
+            if self.lasers.len() < self.max_lasers {
+                self.lasers.push(Laser::new(self.player.x, self.player.y, self.player.angle));
+                self.last_fired_time = Instant::now();
+            }
+        }
     }
 
 }

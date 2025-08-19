@@ -27,7 +27,7 @@ impl Laser {
             dot_size as u32,
             dot_size as u32,
         );
-        
+
         canvas.set_draw_color(color);
         canvas.fill_rect(rect)?;
 
