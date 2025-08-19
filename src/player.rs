@@ -1,7 +1,7 @@
-use sdl2::{keyboard::KeyboardState, pixels::Color, rect::Point, render::Canvas, video::Window };
+use sdl2::{pixels::Color, rect::Point, render::Canvas, video::Window };
 use std::{f64::consts::PI, time::{Duration, Instant}};
 
-use crate::utils;
+use crate::{core::input::{InputController, MoveCommand}, utils};
 
 pub struct Player {
     pub x: f64,
@@ -40,20 +40,19 @@ impl Player {
         }
     }
 
-    pub fn update(&mut self, keyboard_state: &KeyboardState, screen_width: u32, screen_height: u32) {
-        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Left) ||
-        keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::A) {
-            self.angle -= self.rotation_speed;
+    pub fn update(&mut self, controller: &impl InputController, screen_width: u32, screen_height: u32) {
+        for cmd in controller.poll() {
+            match cmd {
+                MoveCommand::RotateLeft => self.angle -= self.rotation_speed,
+                MoveCommand::RotateRight => self.angle += self.rotation_speed,
+                MoveCommand::Accelerate => {
+                    self.velocity_x += self.acceleration * self.angle.cos();
+                    self.velocity_y += self.acceleration * self.angle.sin();
+                }
+            }
         }
-        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Right) ||
-        keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::D) {
-            self.angle += self.rotation_speed;
-        }
-        if keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::Up) ||
-        keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::W) {
-            self.velocity_x += self.acceleration * self.angle.cos();
-            self.velocity_y += self.acceleration * self.angle.sin();    
-        } else {
+
+        if !controller.poll().contains(&MoveCommand::Accelerate) {
             self.velocity_x -= self.deceleration * self.velocity_x.signum();
             self.velocity_y -= self.deceleration * self.velocity_y.signum();
         }

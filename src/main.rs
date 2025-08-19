@@ -3,6 +3,7 @@ mod laser;
 mod asteroid;
 mod game_state;
 mod utils;
+mod core;
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use game_state::{GameState, State};
@@ -50,14 +51,12 @@ fn main() -> Result<(), String> {
             }
         }
 
-        let keyboard_state = event_queue.keyboard_state();
-
         canvas.set_draw_color(black);
         canvas.clear();
-        
+
         match game_state.state {
             State::Playing => {
-                game_state.update(&keyboard_state);
+                game_state.update(&event_queue);
                 game_state.draw(&mut canvas, &font)?;
             }
             State::Paused => {
@@ -70,7 +69,7 @@ fn main() -> Result<(), String> {
         }
 
         canvas.present();
-        
+
     }
 
     Ok(())

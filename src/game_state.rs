@@ -1,6 +1,7 @@
 use sdl2::{keyboard::KeyboardState, pixels::Color, render::Canvas, video::Window};
 use std::time::{Instant, Duration};
 
+use crate::core::input::InputController;
 use crate::player::Player;
 use crate::laser::Laser;
 use crate::asteroid::{Asteroid, AsteroidConstructor};
@@ -46,12 +47,12 @@ impl GameState {
         }
     }
 
-    pub fn update(&mut self, keyboard_state: &KeyboardState) {
+    pub fn update(&mut self, controller: &impl InputController) {
         self.add_asteroids();
         for asteroid in self.asteroids.iter_mut() {
             asteroid.update(self.screen_width, self.screen_height)
         }
-        self.player.update(&keyboard_state, self.screen_width, self.screen_height);
+        self.player.update(controller, self.screen_width, self.screen_height);
         self.handle_firing(&keyboard_state);
         self.handle_asteroid_hits();
         self.handle_player_collision();
@@ -63,7 +64,7 @@ impl GameState {
         self.player.draw(canvas, white)?;
         self.player.draw_score(canvas, white, font)?;
         self.player.draw_lives(canvas, self.screen_width, white)?;
-        
+
         for asteroid in &self.asteroids {
             asteroid.draw(canvas, white)?;
         }
