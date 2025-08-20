@@ -1,6 +1,7 @@
-use sdl2::{pixels::Color, render::Canvas, video::Window};
+use sdl2::{render::Canvas, video::Window};
 use std::time::{Instant, Duration};
 
+use crate::core::colour::RGB;
 use crate::core::input::{Command, InputController};
 use crate::player::Player;
 use crate::laser::Laser;
@@ -59,7 +60,7 @@ impl GameState {
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
-        let white = Color::RGB(255, 255, 255);
+        let white = RGB::WHITE;
 
         self.player.draw(canvas, white)?;
         self.player.draw_score(canvas, white, font)?;
@@ -160,7 +161,7 @@ impl GameState {
         }
     }
 
-    pub fn draw_paused_screen(&self,  canvas: &mut Canvas<Window>, color: Color, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw_paused_screen(&self,  canvas: &mut Canvas<Window>, color: RGB, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
         let text = "PAUSED";
         let x_offset = -50;
         let y_offset = -20;
@@ -185,7 +186,7 @@ impl GameState {
     fn fire_laser(&mut self) {
         if self.last_fired_time.elapsed() >= self.firing_interval {
             if self.lasers.len() < self.max_lasers {
-                self.lasers.push(Laser::new(self.player.x, self.player.y, self.player.angle));
+                self.lasers.push(self.player.fire());
                 self.last_fired_time = Instant::now();
             }
         }

@@ -10,7 +10,7 @@ use core::input::SdlController;
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use game_state::{GameState, State};
 
-fn main() -> Result<(), String> {   
+fn main() -> Result<(), String> {
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
     let font_path = "./src/assets/font/HomeVideoBold-R90Dv.ttf";
     let font: sdl2::ttf::Font<'_, '_> = ttf_context.load_font(font_path, 32)?;

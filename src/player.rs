@@ -1,14 +1,14 @@
-use sdl2::{pixels::Color, rect::Point, render::Canvas, video::Window };
+use sdl2::{rect::Point, render::Canvas, video::Window };
 use std::{f64::consts::PI, time::{Duration, Instant}};
 
-use crate::{core::input::{InputController, Command}, utils};
+use crate::{core::{colour::RGB, input::{Command, InputController}}, laser::Laser, utils};
 
 pub struct Player {
-    pub x: f64,
-    pub y: f64,
     pub angle: f64,
     pub vertices: Vec<Point>,
     pub score: u32,
+    x: f64,
+    y: f64,
     velocity_x: f64,
     velocity_y: f64,
     rotation_speed: f64,
@@ -75,7 +75,7 @@ impl Player {
 
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>, color: Color) -> Result<(), String> {
+    pub fn draw(&self, canvas: &mut Canvas<Window>, color: RGB) -> Result<(), String> {
             if self.invulnrable && self.timer.elapsed().as_millis() / 150 % 2 == 0 {
                 return Ok(());
             }
@@ -87,13 +87,13 @@ impl Player {
         self.score += 1;
     }
 
-    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: Color, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: RGB, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
         let text = format!("SCORE: {}", self.score);
         let position: (i32, i32) = (25, 25);
         utils::draw_text(canvas, &text, color, font, position)
     }
 
-    pub fn draw_lives(&self, canvas: &mut Canvas<Window>, screen_width: u32, color: Color) -> Result<(), String> {
+    pub fn draw_lives(&self, canvas: &mut Canvas<Window>, screen_width: u32, color: RGB) -> Result<(), String> {
         // Hack to avoid crashes
         if self.lives == 0 {
             return Ok(());
@@ -134,6 +134,10 @@ impl Player {
         self.velocity_x = 0.0;
         self.velocity_y = 0.0;
         self.invulnrable = false;
+    }
+
+    pub fn fire(&self) -> Laser {
+        Laser::new(self.x, self.y, self.angle)
     }
 
     fn move_player(&mut self) {

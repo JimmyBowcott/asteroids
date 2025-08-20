@@ -1,6 +1,7 @@
 use rand::Rng;
-use sdl2::{pixels::Color, rect::{Point, Rect}, render::Canvas, video::Window};
+use sdl2::{rect::{Point, Rect}, render::Canvas, video::Window};
 use std::f64::consts::PI;
+use crate::core::colour::RGB;
 
 pub fn is_point_in_polygon(point: Point, vertices: &[Point]) -> bool {
     if vertices.len() == 0 { return false }
@@ -128,8 +129,8 @@ fn lines_intersect(
 
 pub fn draw_text(
     canvas: &mut Canvas<Window>, 
-    text: &str, 
-    color: Color, 
+    text: &str,
+    color: RGB,
     font: &sdl2::ttf::Font<'_, '_>,
     position: (i32, i32)
 ) -> Result<(), String> {
@@ -137,7 +138,7 @@ pub fn draw_text(
         .render(text)
         .solid(color)
         .map_err(|e| e.to_string())?;
-    
+
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator
         .create_texture_from_surface(&surface)
@@ -152,7 +153,7 @@ pub fn draw_text(
 }
 
 pub fn draw_game_over_screen(canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>, screen_width: u32, screen_height: u32, score: u32) -> Result<(), String> {
-    let color = Color::RGB(255, 255, 255);
+    let color = RGB::WHITE;
 
     let mut text = "GAME OVER";
     let mut position = ((screen_width/2 - 110) as i32, (screen_height/2 - 100) as i32);
@@ -188,25 +189,25 @@ pub fn get_vertices(point: (f64, f64), angle: f64, scale: f64) -> Vec<Point>{
     vertices
 }
 
-pub fn draw_vertices(canvas: &mut Canvas<Window>, vertices: &Vec<Point>, color: Color) -> Result<(), String> {
+pub fn draw_vertices(canvas: &mut Canvas<Window>, vertices: &Vec<Point>, color: RGB) -> Result<(), String> {
     let mut sorted_vertices = vertices.clone();
         sorted_vertices.sort_by_key(|point| point.y);
-        
+
         let (x1, y1) = (sorted_vertices[0].x, sorted_vertices[0].y);
         let (x2, y2) = (sorted_vertices[1].x, sorted_vertices[1].y);
         let (x3, y3) = (sorted_vertices[2].x, sorted_vertices[2].y);
-    
+
         canvas.set_draw_color(color);
-    
+
         for y in y1..=y3 {
             let x_start = if y < y2 {
                 interpolate(y, y1, y2, x1, x2)
             } else {
                 interpolate(y, y2, y3, x2, x3)
             };
-    
+
             let x_end = interpolate(y, y1, y3, x1, x3);
-    
+
             for x in x_start.min(x_end)..=x_start.max(x_end) {
                 canvas.draw_point((x, y)).unwrap();
             }
