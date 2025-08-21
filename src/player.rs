@@ -1,7 +1,7 @@
-use sdl2::{rect::Point, render::Canvas, video::Window };
+use sdl2::rect::Point;
 use std::{f64::consts::PI, time::{Duration, Instant}};
 
-use crate::{core::{colour::RGB, input::{Command, InputController}}, laser::Laser, utils};
+use crate::{core::{colour::RGB, input::{Command, InputController}, renderer::Renderer}, laser::Laser, utils};
 
 pub struct Player {
     pub angle: f64,
@@ -75,11 +75,11 @@ impl Player {
 
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>, color: RGB) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut impl Renderer, color: RGB) -> Result<(), String> {
             if self.invulnrable && self.timer.elapsed().as_millis() / 150 % 2 == 0 {
                 return Ok(());
             }
-            utils::draw_vertices(canvas, &self.vertices, color)?;
+            renderer.draw_vertices(&self.vertices, color)?;
         Ok(())
     }
 
@@ -87,13 +87,13 @@ impl Player {
         self.score += 1;
     }
 
-    pub fn draw_score(&self, canvas: &mut Canvas<Window>, color: RGB, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw_score(&self, renderer: &mut impl Renderer, color: RGB) -> Result<(), String> {
         let text = format!("SCORE: {}", self.score);
         let position: (i32, i32) = (25, 25);
-        utils::draw_text(canvas, &text, color, font, position)
+        renderer.draw_text(&text, color, position)
     }
 
-    pub fn draw_lives(&self, canvas: &mut Canvas<Window>, screen_width: u32, color: RGB) -> Result<(), String> {
+    pub fn draw_lives(&self, renderer: &mut impl Renderer, screen_width: u32, color: RGB) -> Result<(), String> {
         // Hack to avoid crashes
         if self.lives == 0 {
             return Ok(());
@@ -105,7 +105,7 @@ impl Player {
         for i in 0..self.lives {
             let x: f64 = start_x + i as f64 * spacing;
             let vertices = utils::get_vertices((x, offset), -PI/2.0, scale);
-            utils::draw_vertices(canvas, &vertices, color)?;
+            renderer.draw_vertices(&vertices, color)?;
         }
         Ok(())
     }

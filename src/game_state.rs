@@ -1,12 +1,11 @@
-use sdl2::{render::Canvas, video::Window};
 use std::time::{Instant, Duration};
 
 use crate::core::colour::RGB;
 use crate::core::input::{Command, InputController};
+use crate::core::renderer::Renderer;
 use crate::player::Player;
 use crate::laser::Laser;
 use crate::asteroid::{Asteroid, AsteroidConstructor};
-use crate::utils;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -59,26 +58,26 @@ impl GameState {
         self.handle_player_collision();
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut impl Renderer) -> Result<(), String> {
         let white = RGB::WHITE;
 
-        self.player.draw(canvas, white)?;
-        self.player.draw_score(canvas, white, font)?;
-        self.player.draw_lives(canvas, self.screen_width, white)?;
+        self.player.draw(renderer, white)?;
+        self.player.draw_score(renderer, white)?;
+        self.player.draw_lives(renderer, self.screen_width, white)?;
 
         for asteroid in &self.asteroids {
-            asteroid.draw(canvas, white)?;
+            asteroid.draw(renderer, white)?;
         }
 
         for laser in &self.lasers {
-            laser.draw(canvas, white)?;
+            laser.draw(renderer, white)?;
         }
 
         if self.state == State::Paused {
-            self.draw_paused_screen(canvas, white, font)?;
+            self.draw_paused_screen(renderer, white)?;
         }
 
-        canvas.present();
+        renderer.present();
         Ok(())
     }
 
@@ -150,7 +149,7 @@ impl GameState {
                     self.state = State::GameOver
                 }
             }
-        }  
+        }
     }
 
     pub fn toggle_paused(&mut self) {
@@ -161,12 +160,13 @@ impl GameState {
         }
     }
 
-    pub fn draw_paused_screen(&self,  canvas: &mut Canvas<Window>, color: RGB, font: &sdl2::ttf::Font<'_, '_>) -> Result<(), String> {
+    pub fn draw_paused_screen(&self,  renderer: &mut impl Renderer, color: RGB) -> Result<(), String> {
         let text = "PAUSED";
         let x_offset = -50;
         let y_offset = -20;
         let position: (i32, i32) = ((0.5*self.screen_width as f32) as i32 + x_offset, (0.5*self.screen_height as f32) as i32 + y_offset);
-        utils::draw_text(canvas, &text, color, font, position)
+        renderer.draw_text(&text, color, position)?;
+        Ok(())
     }
 
     pub fn reset(&mut self) {

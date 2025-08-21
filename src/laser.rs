@@ -1,5 +1,4 @@
-use sdl2::{rect::Rect, render::Canvas, video::Window};
-use crate::core::colour::RGB;
+use crate::core::{colour::RGB, renderer::Renderer};
 
 #[derive(Debug)]
 pub struct Laser {
@@ -19,18 +18,16 @@ impl Laser {
         self.y += self.speed * self.angle.sin();
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>, color: RGB) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut impl Renderer, colour: RGB) -> Result<(), String> {
         let dot_size = 3;
 
-        let rect = Rect::new(
+        renderer.draw_rect(
             (self.x - dot_size as f64 / 2.0) as i32,
             (self.y - dot_size as f64 / 2.0) as i32,
             dot_size as u32,
             dot_size as u32,
+            colour,
         );
-
-        canvas.set_draw_color(color);
-        canvas.fill_rect(rect)?;
 
         Ok(())
     }

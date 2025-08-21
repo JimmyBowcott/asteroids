@@ -1,7 +1,7 @@
-use sdl2::{rect::Point, render::Canvas, video::Window};
+use sdl2::rect::Point;
 use rand::Rng;
 use std::f64::consts::PI;
-use crate::{core::colour::RGB, utils::{self, triangle_polygon_collision}};
+use crate::{core::{colour::RGB, renderer::Renderer}, utils::{self, triangle_polygon_collision}};
 
 pub struct AsteroidConstructor {
     x: Option<f64>,
@@ -101,9 +101,8 @@ impl Asteroid {
         self.recalculate_vertices();
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>, color: RGB) -> Result<(), String> {
-        canvas.set_draw_color(color);
-        canvas.draw_lines(&self.vertices[..])?;
+    pub fn draw(&self, renderer: &mut impl Renderer, colour: RGB) -> Result<(), String> {
+        renderer.draw_lines(&self.vertices[..], colour)?;
         Ok(())
     }
 

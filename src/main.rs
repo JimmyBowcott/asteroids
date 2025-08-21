@@ -5,7 +5,7 @@ mod game_state;
 mod utils;
 mod core;
 
-use core::input::SdlController;
+use core::{input::SdlController, renderer::{Renderer, SdlRenderer}};
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use game_state::{GameState, State};
@@ -28,6 +28,8 @@ fn main() -> Result<(), String> {
     let mut canvas = window.into_canvas()
         .build()
         .unwrap();
+    let mut renderer = SdlRenderer::new(&mut canvas, &font, screen_width, screen_height);
+    let renderer_ref: &mut dyn Renderer = &mut renderer;
 
     let mut event_queue = sdl_context.event_pump().unwrap();
     let mut game_state = GameState::new(screen_width, screen_height);
@@ -59,13 +61,13 @@ fn main() -> Result<(), String> {
         match game_state.state {
             State::Playing => {
                 game_state.update(&SdlController::new(&event_queue));
-                game_state.draw(&mut canvas, &font)?;
+                game_state.draw(renderer_ref)?;
             }
             State::Paused => {
-                game_state.draw(&mut canvas, &font)?;
+                game_state.draw(renderer_ref)?;
             }
             State::GameOver => {
-                utils::draw_game_over_screen(&mut canvas, &font, screen_width, screen_height, game_state.player.score)?;
+                renderer_ref.draw_game_over_screen(game_state.player.score)?;
                 canvas.present();
             }
         }
