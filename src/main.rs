@@ -5,9 +5,9 @@ mod game_state;
 mod utils;
 mod core;
 
-use core::{input::SdlController, renderer::{Renderer, SdlRenderer}};
+use core::{colour::RGB, input::SdlController, renderer::{Renderer, SdlRenderer}};
 
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
+use sdl2::{event::Event, keyboard::Keycode};
 use game_state::{GameState, State};
 
 fn main() -> Result<(), String> {
@@ -24,12 +24,11 @@ fn main() -> Result<(), String> {
         .build()
         .unwrap();
 
-    let black = Color::RGB(0,0,0);
+    let black = RGB::BLACK;
     let mut canvas = window.into_canvas()
         .build()
         .unwrap();
     let mut renderer = SdlRenderer::new(&mut canvas, &font, screen_width, screen_height);
-    let renderer_ref: &mut dyn Renderer = &mut renderer;
 
     let mut event_queue = sdl_context.event_pump().unwrap();
     let mut game_state = GameState::new(screen_width, screen_height);
@@ -55,24 +54,24 @@ fn main() -> Result<(), String> {
             }
         }
 
-        canvas.set_draw_color(black);
-        canvas.clear();
+        renderer.set_colour(black);
+        renderer.clear();
 
         match game_state.state {
             State::Playing => {
                 game_state.update(&SdlController::new(&event_queue));
-                game_state.draw(renderer_ref)?;
+                game_state.draw(&mut renderer)?;
             }
             State::Paused => {
-                game_state.draw(renderer_ref)?;
+                game_state.draw(&mut renderer)?;
             }
             State::GameOver => {
+                let renderer_ref = &mut renderer;
                 renderer_ref.draw_game_over_screen(game_state.player.score)?;
-                canvas.present();
             }
         }
 
-        canvas.present();
+        renderer.present();
 
     }
 

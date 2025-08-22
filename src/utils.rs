@@ -1,6 +1,7 @@
 use rand::Rng;
-use sdl2::rect::Point;
 use std::f64::consts::PI;
+
+use crate::core::renderer::Point;
 
 pub fn is_point_in_polygon(point: Point, vertices: &[Point]) -> bool {
     if vertices.len() == 0 { return false }

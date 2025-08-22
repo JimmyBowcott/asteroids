@@ -1,7 +1,6 @@
-use sdl2::rect::Point;
 use rand::Rng;
 use std::f64::consts::PI;
-use crate::{core::{colour::RGB, renderer::Renderer}, utils::{self, triangle_polygon_collision}};
+use crate::{core::{colour::RGB, renderer::{Renderer, Point}}, utils::{self, triangle_polygon_collision}};
 
 pub struct AsteroidConstructor {
     x: Option<f64>,

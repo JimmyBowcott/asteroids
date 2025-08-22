@@ -1,7 +1,6 @@
-use sdl2::rect::Point;
 use std::{f64::consts::PI, time::{Duration, Instant}};
 
-use crate::{core::{colour::RGB, input::{Command, InputController}, renderer::Renderer}, laser::Laser, utils};
+use crate::{core::{colour::RGB, input::{Command, InputController}, renderer::{Renderer, Point}}, laser::Laser, utils};
 
 pub struct Player {
     pub angle: f64,

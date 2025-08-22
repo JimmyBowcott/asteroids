@@ -2,15 +2,34 @@ use crate::utils;
 
 use super::colour::RGB;
 use sdl2::{
-    rect::{Point, Rect},
+    rect::Rect,
     render::Canvas,
     video::Window,
 };
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct Point {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl From<Point> for sdl2::rect::Point {
+    fn from(p: Point) -> Self {
+        sdl2::rect::Point::new(p.x, p.y)
+    }
+}
+
+impl Point {
+    pub fn new(x: i32, y: i32) -> Self {
+        Point{x, y}
+    }
+}
+
 pub trait Renderer {
     fn set_colour(&mut self, colour: RGB);
+    fn clear(&mut self);
     fn draw_rect(&mut self, x: i32, y: i32, w: u32, h: u32, colour: RGB);
-    fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32);
+    // fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32);
     fn draw_lines(&mut self, vertices: &[Point], colour: RGB) -> Result<(), String>;
     fn draw_text(&mut self, text: &str, colour: RGB, position: (i32, i32)) -> Result<(), String>;
     fn draw_vertices(&mut self, vertices: &Vec<Point>, colour: RGB) -> Result<(), String>;
@@ -46,20 +65,25 @@ impl<'a> Renderer for SdlRenderer<'a> {
         self.canvas.set_draw_color(colour);
     }
 
+    fn clear(&mut self) {
+        self.canvas.clear();
+    }
+
     fn draw_rect(&mut self, x: i32, y: i32, w: u32, h: u32, colour: RGB) {
         self.canvas.set_draw_color(colour);
         let _ = self.canvas.fill_rect(Rect::new(x, y, w, h));
     }
 
-    fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
-        let _ = self
-            .canvas
-            .draw_line(Point::new(x1, y1), Point::new(x2, y2));
-    }
+    // fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
+    //     let _ = self
+    //         .canvas
+    //         .draw_line(Point::new(x1, y1), Point::new(x2, y2));
+    // }
 
     fn draw_lines(&mut self, vertices: &[Point], colour: RGB) -> Result<(), String> {
+        let sdl_points: Vec<sdl2::rect::Point> = vertices.iter().copied().map(Into::into).collect();
         self.canvas.set_draw_color(colour);
-        self.canvas.draw_lines(vertices)?;
+        self.canvas.draw_lines(&sdl_points[..])?;
         Ok(())
     }
 
